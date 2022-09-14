@@ -64,16 +64,12 @@ function playdoh ({
     resolverAddress = protocol === 'udp6' ? '::1' : '127.0.0.1'
   }
   return async function playdoh (request, response, next) {
-    if (request.headers[HTTP2_HEADER_ACCEPT] !== dohMediaType) {
-      return next()
-    }
-    if (request.httpVersionMajor < dohMinimumHttpVersionMajor) {
-      return next(new HTTPVersionNotSupported())
-    }
+ 
+  
 
     const dnsMessage = []
     switch (request.method) {
-      case HTTP2_METHOD_GET:
+      case "GET":
         const { url } = request
         const dns = new URLSearchParams(url.substr(url.indexOf('?'))).get('dns')
         if (!dns) {
@@ -90,7 +86,7 @@ function playdoh ({
         }
         dnsMessage.push(decoded)
         break
-      case HTTP2_METHOD_POST:
+    case "POST":
         try {
           await readUntil(request, dnsMessage, dohMaximumMessageLength)
         } catch (error) {
@@ -138,7 +134,7 @@ function playdoh ({
         return
       }
       message.writeUInt16BE(requestDnsId, 0)
-      if (request.method === HTTP2_METHOD_GET) {
+      if (request.method === "GET") {
         let answers
         try {
           ({ answers } = decode(message))
@@ -147,11 +143,11 @@ function playdoh ({
         }
         const ttl = answers.reduce(smallestTtl, Infinity)
         if (Number.isFinite(ttl)) {
-          response.setHeader(HTTP2_HEADER_CACHE_CONTROL, `max-age=${ttl}`)
+          response.setHeader("Cache-Control", `max-age=${ttl}`)
         }
       }
-      response.setHeader(HTTP2_HEADER_CONTENT_LENGTH, message.length)
-      response.setHeader(HTTP2_HEADER_CONTENT_TYPE, dohMediaType)
+      response.setHeader("Content-Length", message.length)
+      response.setHeader("Content-Type", dohMediaType)
       response.end(message)
       socket.close()
     })
